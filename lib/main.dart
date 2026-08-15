@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -17,6 +20,7 @@ class MyApp extends StatelessWidget {
 
 class TranscriptionPage extends StatefulWidget {
   const TranscriptionPage({super.key});
+
   @override
   State<TranscriptionPage> createState() => _TranscriptionPageState();
 }
@@ -25,10 +29,25 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
   String _status = "آماده دریافت فایل";
 
   Future<void> _pickFile() async {
-    // کلمه platform از اینجا حذف شد چون در نسخه‌های جدید منسوخ شده
-    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.audio);
-    if (result != null) {
-      setState(() => _status = "در حال پردازش: ${result.files.single.name}");
+    try {
+      // اینجا کدهای نسخه ۱۲ رو به تمیزترین شکل نوشتیم
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.audio,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        setState(() {
+          _status = "فایل انتخاب شد: ${result.files.first.name}";
+        });
+      } else {
+        setState(() {
+          _status = "انتخاب فایل لغو شد";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _status = "خطا در انتخاب: $e";
+      });
     }
   }
 
@@ -40,9 +59,16 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(onPressed: _pickFile, child: const Text("انتخاب فایل صوتی")),
+            ElevatedButton(
+              onPressed: _pickFile,
+              child: const Text("انتخاب فایل صوتی"),
+            ),
             const SizedBox(height: 20),
-            Text(_status, style: const TextStyle(fontSize: 16)),
+            Text(
+              _status, 
+              style: const TextStyle(fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
