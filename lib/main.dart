@@ -25,10 +25,10 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
   String _status = "آماده دریافت فایل";
 
   Future<void> _pickFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.audio);
+    // کلمه platform از اینجا حذف شد چون در نسخه‌های جدید منسوخ شده
+    FilePickerResult? result = await FilePicker.pickFiles(type: FileType.audio);
     if (result != null) {
       setState(() => _status = "در حال پردازش: ${result.files.single.name}");
-      // در مرحله بعد اتصال به سرویس تبدیل را اینجا اضافه می‌کنیم
     }
   }
 
@@ -49,4 +49,3 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
     );
   }
 }
-
