@@ -30,14 +30,14 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
 
   Future<void> _pickFile() async {
     try {
-      // اینجا کدهای نسخه ۱۲ رو به تمیزترین شکل نوشتیم
-      final result = await FilePicker.platform.pickFiles(
+      // استفاده از متد استاندارد و مستقیم نسخه ۱۲ بدون کلمه platform
+      final file = await FilePicker.pickFile(
         type: FileType.audio,
       );
 
-      if (result != null && result.files.isNotEmpty) {
+      if (file != null) {
         setState(() {
-          _status = "فایل انتخاب شد: ${result.files.first.name}";
+          _status = "فایل انتخاب شد: ${file.name}";
         });
       } else {
         setState(() {
