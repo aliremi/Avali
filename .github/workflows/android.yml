@@ -23,7 +23,7 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Generate Android Configs
+    - name: Scaffold Android
       run: |
         flutter create --platforms=android --org com.aliremi .
         sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
@@ -42,6 +42,4 @@ jobs:
       with:
         name: app-release
         path: build/app/outputs/flutter-apk/app-release.apk
-      with:
-        name: app-release
-        path: build/app/outputs/flutter-apk/app-release.apk
+
