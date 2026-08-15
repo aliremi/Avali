@@ -65,17 +65,17 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
     }
   }
 
-  // تابع انتخاب فایل
+  // تابع انتخاب فایل (اصلاح شده برای نسخه 12 پکیج)
   Future<void> _pickFile() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final file = await FilePicker.pickFile(
         type: FileType.audio,
       );
 
-      if (result != null && result.files.single.path != null) {
+      if (file != null && file.path != null) {
         setState(() {
-          _fileName = result.files.single.name;
-          _filePath = result.files.single.path;
+          _fileName = file.name;
+          _filePath = file.path;
           _extractedText = "فایل آماده است. برای شروع پردازش، دکمه استخراج را بزنید.";
         });
       }
@@ -109,7 +109,7 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
       final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
       final bytes = await File(_filePath!).readAsBytes();
       
-      // تشخیص فرمت فایل به صورت خودکار (مثلا mp3 یا ogg)
+      // تشخیص فرمت فایل به صورت خودکار
       final mimeType = lookupMimeType(_filePath!) ?? 'audio/mp3';
 
       // دستور (Prompt) ما به هوش مصنوعی
@@ -239,7 +239,7 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
                     const SizedBox(height: 10),
                     Text(_fileName, style: const TextStyle(color: Colors.black54), textAlign: TextAlign.center),
                     
-                    // دکمه شروع پردازش هوش مصنوعی (سبز رنگ)
+                    // دکمه شروع پردازش هوش مصنوعی
                     if (_filePath != null) ...[
                       const SizedBox(height: 15),
                       ElevatedButton.icon(
@@ -285,4 +285,3 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
     );
   }
 }
-
