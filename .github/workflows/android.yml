@@ -23,13 +23,12 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Scaffold Android
+    - name: Scaffold & Fix Configs
       run: |
         flutter create --platforms=android --org com.aliremi --project-name voice_text_app .
-        echo "android.enableDslMarkers=false" >> android/gradle.properties
-        echo "android.suppressUnsupportedCompileSdk=34" >> android/gradle.properties
-        sed -i 's/minSdk = flutter.minSdk/minSdk = 21/g' android/app/build.gradle.kts || true
-        sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
+        # اصلاح فایل build.gradle.kts برای نسخه حداقل اندروید
+        echo 'android { defaultConfig { minSdkVersion(21) } }' >> android/app/build.gradle.kts
+        # اضافه کردن مجوزها به منیفست
         sed -i '/<manifest/a \    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.BLUETOOTH"/>' android/app/src/main/AndroidManifest.xml
 
     - name: Install dependencies
