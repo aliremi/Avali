@@ -17,7 +17,6 @@ class TVVTApp extends StatelessWidget {
       title: 'TV / VT',
       theme: ThemeData(
         useMaterial3: true,
-        fontFamily: 'Roboto',
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF6C63FF),
           brightness: Brightness.dark,
@@ -29,7 +28,7 @@ class TVVTApp extends StatelessWidget {
   }
 }
 
-// ---------------- صفحه خوش‌آمدگویی (Splash Screen) ----------------
+// ---------------- صفحه خوش‌آمدگویی ----------------
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -60,13 +59,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _animController.forward();
 
-    // انتقال خودکار به صفحه اصلی پس از ۲.۵ ثانیه
     Future.delayed(const Duration(milliseconds: 2500), () {
       if (mounted) {
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            transitionDuration: const Duration(milliseconds: 800),
+            transitionDuration: const Duration(milliseconds: 700),
             pageBuilder: (_, __, ___) => const MainScreen(),
             transitionsBuilder: (_, animation, __, child) =>
                 FadeTransition(opacity: animation, child: child),
@@ -88,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0F1016), Color(0xFF1E1233)],
+            colors: [Color(0xFF0F1016), Color(0xFF1B162B)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -101,47 +99,27 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 110,
-                    height: 110,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF8A2387), Color(0xFFE94057), Color(0xFFF27121)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFE94057).withOpacity(0.4),
-                          blurRadius: 30,
-                          offset: const Offset(0, 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Image.asset(
+                      'icon.png',
+                      width: 130,
+                      height: 130,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 130,
+                        height: 130,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6C63FF),
+                          borderRadius: BorderRadius.circular(28),
                         ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'TV',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: 2,
-                            ),
+                        child: const Center(
+                          child: Text(
+                            'TV\nVT',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
                           ),
-                          Text(
-                            'VT',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white70,
-                              letterSpacing: 2,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -211,7 +189,6 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  // پخش صدا از متن
   Future<void> _speak() async {
     if (_ttsController.text.trim().isNotEmpty) {
       setState(() => _isPlayingVoice = true);
@@ -219,13 +196,11 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     }
   }
 
-  // توقف پخش صدا
   Future<void> _stopSpeak() async {
     await _flutterTts.stop();
     setState(() => _isPlayingVoice = false);
   }
 
-  // تبدیل صدا به متن
   Future<void> _toggleListen() async {
     if (!_isListening) {
       bool available = await _speech.initialize();
@@ -246,7 +221,6 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     }
   }
 
-  // کپی در حافظه
   void _copyToClipboard(String text) {
     if (text.trim().isNotEmpty) {
       Clipboard.setData(ClipboardData(text: text));
@@ -264,7 +238,6 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     }
   }
 
-  // صفحه درباره ما
   void _showAboutDialog() {
     showModalBottomSheet(
       context: context,
@@ -289,19 +262,28 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                   ),
                 ),
                 const SizedBox(height: 20),
-                const CircleAvatar(
-                  radius: 35,
-                  backgroundColor: Color(0xFF6C63FF),
-                  child: Icon(Icons.person, size: 40, color: Colors.white),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(
+                    'icon.png',
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const CircleAvatar(
+                      radius: 35,
+                      backgroundColor: Color(0xFF6C63FF),
+                      child: Icon(Icons.person, size: 40, color: Colors.white),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 15),
                 const Text(
-                  'درباره سازنده و برنامه',
+                  'درباره برنامه TV / VT',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'این اپلیکیشن با نام TV / VT ابزاری سریع و قدرتمند برای تبدیل متن به گفتار و تبدیل گفتار به متن است که با بهره‌گیری از آخرین فناوری‌ها طراحی شده است.\n\nتوسعه‌داده شده توسط Aliremi',
+                  'این اپلیکیشن ابزاری سریع برای تبدیل صدا به متن (Voice to Text) و متن به گفتار (Text to Voice) است.\n\nتوسعه‌داده شده توسط Aliremi',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7), height: 1.6),
                 ),
@@ -368,9 +350,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
         body: TabBarView(
           controller: _tabController,
           children: [
-            // تب ۱: متن به گفتار
             _buildTextToSpeechTab(),
-            // تب ۲: گفتار به متن
             _buildSpeechToTextTab(),
           ],
         ),
