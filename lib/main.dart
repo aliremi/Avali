@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:file_picker/file_picker.dart';
 
 void main() => runApp(const MyApp());
 
@@ -12,6 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      title: 'Avali App',
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'Tahoma',
@@ -20,46 +22,38 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const TranscriptionPage(),
+      home: const MainHomePage(),
     );
   }
 }
 
-class TranscriptionPage extends StatefulWidget {
-  const TranscriptionPage({super.key});
+class MainHomePage extends StatefulWidget {
+  const MainHomePage({super.key});
 
   @override
-  State<TranscriptionPage> createState() => _TranscriptionPageState();
+  State<MainHomePage> createState() => _MainHomePageState();
 }
 
-class _TranscriptionPageState extends State<TranscriptionPage> with SingleTickerProviderStateMixin {
-  final SpeechToText _speechToText = SpeechToText();
+class _MainHomePageState extends State<MainHomePage> {
+  // --- متغیرهای متن به صوت ---
   final FlutterTts _flutterTts = FlutterTts();
   final TextEditingController _textController = TextEditingController();
-  
-  bool _speechEnabled = false;
   bool _isSpeaking = false;
-  String _wordsRead = "آماده دریافت صدا... روی میکروفون بزنید.";
 
-  late AnimationController _animController;
+  // --- متغیرهای ویس به متنِ زنده ---
+  final SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  String _liveWords = "برای ضبط ویسِ زنده، دکمه میکروفون را بزنید...";
+
+  // --- متغیرهای انتخاب فایل صوتی ---
+  String _selectedFileName = "هیچ فایلی انتخاب نشده است";
+  String _fileExtractedText = "نتیجه پردازش فایل صوتی اینجا نمایش داده می‌شود...";
 
   @override
   void initState() {
     super.initState();
-    _initSpeech();
     _initTts();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat(reverse: true);
-  }
-
-  void _initSpeech() async {
-    _speechEnabled = await _speechToText.initialize(
-      onError: (val) => setState(() => _wordsRead = "خطا در تشخیص: ${val.errorMsg}"),
-      onStatus: (val) => setState(() {}),
-    );
-    setState(() {});
+    _initSpeech();
   }
 
   void _initTts() {
@@ -68,28 +62,15 @@ class _TranscriptionPageState extends State<TranscriptionPage> with SingleTicker
     _flutterTts.setErrorHandler((msg) => setState(() => _isSpeaking = false));
   }
 
-  void _startListening() async {
-    if (_speechEnabled) {
-      setState(() => _wordsRead = "گوش می‌دهم... صحبت کنید 🎤");
-      await _speechToText.listen(
-        onResult: (result) => setState(() {
-          _wordsRead = result.recognizedWords.isEmpty ? "صدایی تشخیص داده نشد..." : result.recognizedWords;
-        }),
-        localeId: 'fa-IR',
-        cancelOnError: true,
-        partialResults: true,
-      );
-      setState(() {});
-    } else {
-      _initSpeech();
-    }
-  }
-
-  void _stopListening() async {
-    await _speechToText.stop();
+  void _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize(
+      onError: (val) => setState(() => _liveWords = "خطا: ${val.errorMsg}"),
+      onStatus: (val) => setState(() {}),
+    );
     setState(() {});
   }
 
+  // پخش متن به صوت
   Future<void> _speakText() async {
     if (_textController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -103,9 +84,53 @@ class _TranscriptionPageState extends State<TranscriptionPage> with SingleTicker
     await _flutterTts.speak(_textController.text);
   }
 
+  // شروع ضبط ویسِ زنده
+  void _startListening() async {
+    if (_speechEnabled) {
+      setState(() => _liveWords = "در حال گوش دادن... صحبت کنید 🎤");
+      await _speechToText.listen(
+        onResult: (result) => setState(() {
+          _liveWords = result.recognizedWords.isEmpty ? "صدایی شنیده نشد..." : result.recognizedWords;
+        }),
+        localeId: 'fa-IR',
+        cancelOnError: true,
+        partialResults: true,
+      );
+      setState(() {});
+    } else {
+      _initSpeech();
+    }
+  }
+
+  // توقف ضبط ویسِ زنده
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+  // انتخاب فایل صوتی از گوشی
+  Future<void> _pickAudioFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.audio,
+      );
+
+      if (result != null && result.files.single.path != null) {
+        String fileName = result.files.single.name;
+        setState(() {
+          _selectedFileName = fileName;
+          _fileExtractedText = "فایل '$fileName' انتخاب شد.\n(آماده پردازش)";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _fileExtractedText = "خطا در انتخاب فایل: $e";
+      });
+    }
+  }
+
   @override
   void dispose() {
-    _animController.dispose();
     _textController.dispose();
     _flutterTts.stop();
     _speechToText.stop();
@@ -119,7 +144,7 @@ class _TranscriptionPageState extends State<TranscriptionPage> with SingleTicker
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text("مترجم هوشمند آوالی", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("آوالی - مترجم صوتی هوشمند", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -137,39 +162,34 @@ class _TranscriptionPageState extends State<TranscriptionPage> with SingleTicker
             padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
-                // لوگو با افکت پالس زنده
-                ScaleTransition(
-                  scale: isListening || _isSpeaking 
-                      ? Tween(begin: 1.0, end: 1.08).animate(_animController)
-                      : const AlwaysStoppedAnimation(1.0),
-                  child: Container(
-                    width: 85, height: 85,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)]),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (isListening ? Colors.red : Colors.purple).withOpacity(0.6),
-                          blurRadius: 20,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      isListening ? Icons.mic : (_isSpeaking ? Icons.volume_up : Icons.mic_external_on_rounded),
-                      size: 40,
-                      color: Colors.white,
-                    ),
+                // لوگوی درخشان بالای صفحه
+                Container(
+                  width: 85, height: 85,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(colors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)]),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purple.withOpacity(0.6),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.mic_external_on_rounded,
+                    size: 40,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 25),
 
-                // کارت اول: تبدیل متن به صدا
+                // 🧊 کارت اول: تبدیل متن به صوت (TTS)
                 _buildGlassCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("تبدیل متن به صدا (TTS)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      const Text("تبدیل متن به صوت", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 10),
                       TextField(
                         controller: _textController,
@@ -190,7 +210,7 @@ class _TranscriptionPageState extends State<TranscriptionPage> with SingleTicker
                         child: ElevatedButton.icon(
                           onPressed: _isSpeaking ? null : _speakText,
                           icon: Icon(_isSpeaking ? Icons.hourglass_top : Icons.volume_up),
-                          label: Text(_isSpeaking ? "در حال پخش صدا..." : "پخش صوت"),
+                          label: Text(_isSpeaking ? "در حال پخش صوت..." : "پخش صوت"),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.deepPurpleAccent,
                             foregroundColor: Colors.white,
@@ -203,17 +223,17 @@ class _TranscriptionPageState extends State<TranscriptionPage> with SingleTicker
                 ),
                 const SizedBox(height: 20),
 
-                // کارت دوم: تبدیل صوت به متن
+                // 🧊 کارت دوم: تبدیل ویسِ زنده به متن (Speech-to-Text)
                 _buildGlassCard(
                   child: Column(
                     children: [
-                      const Text("تبدیل گفتار به متن (Speech-to-Text)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      const Text("تبدیل ویسِ زنده به متن", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 15),
                       GestureDetector(
                         onTap: isListening ? _stopListening : _startListening,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isListening ? Colors.red.shade600 : Colors.purple.shade700,
@@ -227,17 +247,17 @@ class _TranscriptionPageState extends State<TranscriptionPage> with SingleTicker
                           ),
                           child: Icon(
                             isListening ? Icons.mic : Icons.mic_none,
-                            size: 40,
+                            size: 38,
                             color: Colors.white,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       Text(
-                        isListening ? "🔴 در حال گوش دادن... حرف بزنید" : "برای ضبط لمس کنید",
+                        isListening ? "🔴 در حال گوش دادن... صحبت کنید" : "برای ضبط لمس کنید",
                         style: TextStyle(color: isListening ? Colors.redAccent.shade100 : Colors.white70, fontSize: 13),
                       ),
-                      const SizedBox(height: 15),
+                      const SizedBox(height: 12),
                       Container(
                         width: double.infinity,
                         constraints: const BoxConstraints(minHeight: 80),
@@ -248,9 +268,56 @@ class _TranscriptionPageState extends State<TranscriptionPage> with SingleTicker
                           border: Border.all(color: Colors.white.withOpacity(0.1)),
                         ),
                         child: Text(
-                          _wordsRead,
+                          _liveWords,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 15, height: 1.4, color: Colors.white),
+                          style: const TextStyle(fontSize: 14, height: 1.4, color: Colors.white),
+                          textDirection: TextDirection.rtl,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // 🧊 کارت سوم: انتخاب فایل صوتی و تبدیل به متن
+                _buildGlassCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text("تبدیل فایل صوتی به متن", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16), textAlign: TextAlign.right),
+                      const SizedBox(height: 15),
+                      OutlinedButton.icon(
+                        onPressed: _pickAudioFile,
+                        icon: const Icon(Icons.audio_file, color: Colors.amberAccent),
+                        label: const Text("انتخاب فایل صوتی از حافظه", style: TextStyle(color: Colors.white)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _selectedFileName,
+                        style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const Divider(height: 30, color: Colors.white24),
+                      const Text("نتیجه فایل صوتی:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14), textAlign: TextAlign.right),
+                      const SizedBox(height: 8),
+                      Container(
+                        constraints: const BoxConstraints(minHeight: 80),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        ),
+                        child: Text(
+                          _fileExtractedText,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 14, height: 1.4, color: Colors.white),
                           textDirection: TextDirection.rtl,
                         ),
                       ),
