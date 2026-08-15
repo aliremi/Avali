@@ -18,20 +18,30 @@ jobs:
         distribution: 'zulu'
         java-version: '17'
 
-    - name: Set up Flutter (STABLE LOCKED)
+    - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.22.3'
         channel: 'stable'
 
-    - name: Build APK (Clean Setup)
+    - name: Hard Reset & Build
       run: |
-        flutter create --platforms=android .
+        # پاک کردن کش‌های قدیمی
+        rm -rf android
+        rm -f pubspec.lock
+        
         flutter pub get
         
-        # فقط اضافه کردن دسترسی‌های میکروفون و اینترنت
+        # تعیین صریح نام با حروف کوچک برای جلوگیری از ارور Avali
+        flutter create --platforms=android --project-name voice_text_app --org com.aliremi .
+        
+        # تنظیمات اندروید
+        sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/g' android/app/build.gradle.kts || true
+        sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 23/g' android/app/build.gradle.kts || true
+        
+        # دسترسی‌ها
         sed -i '/<manifest/a \    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
         
+        # بیلد نهایی
         flutter build apk --release --no-tree-shake-icons
 
     - name: Upload APK
