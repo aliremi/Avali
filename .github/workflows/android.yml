@@ -23,17 +23,11 @@ jobs:
       with:
         channel: 'stable'
 
-    - name: Build & Fix SDK
+    - name: Build APK
       run: |
         flutter create --platforms=android --org com.aliremi --project-name voice_text_app .
-        # تغییر نسخه به ۲۳ که فلاتر جدید الزامی کرده
-        sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 23/g' android/app/build.gradle || true
-        sed -i 's/minSdk = flutter.minSdk/minSdk = 23/g' android/app/build.gradle.kts || true
-        # مجوزها
-        sed -i '/<manifest/a \    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.BLUETOOTH"/>' android/app/src/main/AndroidManifest.xml
-        
         flutter pub get
-        flutter build apk --release --no-tree-shake-icons
+        flutter build apk --release --no-tree-shake-icons --dart-define=MIN_SDK_VERSION=23
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
