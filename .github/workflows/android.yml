@@ -28,9 +28,9 @@ jobs:
         flutter pub get
         flutter create --platforms=android .
         
-        # حل مشکل ارور compileSdk برای پکیج file_picker
-        sed -i 's/flutter.compileSdkVersion/36/g' android/app/build.gradle.kts || true
-        sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 36/g' android/app/build.gradle || true
+        # اصلاح دقیق برای فایل های .kts جدید
+        # تغییر compileSdk به 36 در فایل build.gradle.kts
+        sed -i 's/compileSdk = .*/compileSdk = 36/g' android/app/build.gradle.kts
         
         # اضافه کردن دسترسی‌ها
         sed -i '/<manifest/a \    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
