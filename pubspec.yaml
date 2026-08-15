@@ -1,5 +1,5 @@
-name: my_app
-description: "AI Generated Android App"
+name: voice_text_app
+description: "Voice to Text and Text to Voice App"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,7 +10,8 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  speech_to_text: ^6.6.1
+  flutter_tts: ^3.8.5
 
 flutter:
   uses-material-design: true
-
