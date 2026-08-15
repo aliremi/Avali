@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_tts/flutter_tts.dart'; // پکیج تبدیل متن به صدا اضافه شد
 
 void main() {
   runApp(const MyApp());
@@ -34,9 +35,15 @@ class TranscriptionPage extends StatefulWidget {
 }
 
 class _TranscriptionPageState extends State<TranscriptionPage> {
+  // --- متغیرهای بخش صدا به متن ---
   String _fileName = "هیچ فایلی انتخاب نشده";
   String _extractedText = "متن استخراج شده اینجا نمایش داده می‌شود...";
 
+  // --- متغیرهای بخش متن به صدا ---
+  final FlutterTts _flutterTts = FlutterTts();
+  final TextEditingController _textController = TextEditingController();
+
+  // تابع انتخاب فایل
   Future<void> _pickFile() async {
     try {
       final file = await FilePicker.pickFile(
@@ -57,12 +64,34 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
     }
   }
 
+  // تابع تبدیل متن به صدا
+  Future<void> _speak() async {
+    if (_textController.text.isNotEmpty) {
+      // تنظیم زبان به فارسی (در صورت پشتیبانی گوشی)
+      await _flutterTts.setLanguage("fa-IR");
+      await _flutterTts.setPitch(1.0); // تنظیم زیر و بمی صدا
+      await _flutterTts.setSpeechRate(0.5); // تنظیم سرعت خواندن
+      await _flutterTts.speak(_textController.text);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("لطفاً اول یک متن بنویسید!")),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _flutterTts.stop();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("مترجم هوشمند صدا و متن", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("مترجم هوشمند صدا و متن", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         elevation: 0,
@@ -72,11 +101,11 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // بخش لوگو
+            // بخش لوگو موقت
             Center(
               child: Container(
-                width: 120,
-                height: 120,
+                width: 100,
+                height: 100,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
@@ -84,16 +113,65 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
                     BoxShadow(color: Colors.black12, blurRadius: 10, spreadRadius: 2),
                   ],
                 ),
-                child: ClipOval(
-                  // وقتی لوگو رو آپلود کردی، کد زیر کامنت میشه و خط بعدیش فعال میشه
-                  child: const Icon(Icons.mic_external_on_rounded, size: 60, color: Color(0xFF6200EA)),
-                  // child: Image.asset('assets/logo.png', fit: BoxFit.cover),
+                child: const ClipOval(
+                  child: Icon(Icons.mic_external_on_rounded, size: 50, color: Color(0xFF6200EA)),
                 ),
               ),
             ),
             const SizedBox(height: 30),
 
-            // کارت انتخاب فایل
+            // -----------------------------------------
+            // کارت اول: تبدیل متن به صدا (Text to Speech)
+            // -----------------------------------------
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    const Text(
+                      "تبدیل متن به صدا",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: _textController,
+                      maxLines: 3,
+                      textDirection: TextDirection.rtl,
+                      decoration: InputDecoration(
+                        hintText: "متن خود را اینجا تایپ کنید...",
+                        hintTextDirection: TextDirection.rtl,
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    ElevatedButton.icon(
+                      onPressed: _speak,
+                      icon: const Icon(Icons.volume_up),
+                      label: const Text("پخش صدا"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple.shade50,
+                        foregroundColor: const Color(0xFF6200EA),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // -----------------------------------------
+            // کارت دوم: تبدیل صدا به متن (Voice to Text)
+            // -----------------------------------------
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -121,30 +199,18 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
                       style: const TextStyle(color: Colors.black54),
                       textAlign: TextAlign.center,
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // کارت نمایش متن
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "نتیجه پردازش:",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    const Divider(height: 30),
+                    const Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        "نتیجه پردازش:",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Container(
                       width: double.infinity,
-                      // این خط تصحیح شد: استفاده از constraints به جای minHeight مستقیم
-                      constraints: const BoxConstraints(minHeight: 150),
+                      constraints: const BoxConstraints(minHeight: 120),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
