@@ -17,19 +17,19 @@ jobs:
       with:
         distribution: 'zulu'
         java-version: '17'
-        # قابلیت کش گریدل اینجا حذف شده تا ارور ندهد
 
-    - name: Set up Flutter
+    - name: Set up Flutter (STABLE LOCKED)
       uses: subosito/flutter-action@v2
       with:
+        flutter-version: '3.22.3'
         channel: 'stable'
 
-    - name: Build APK
+    - name: Build APK (Clean Setup)
       run: |
         flutter create --platforms=android .
         flutter pub get
         
-        sed -i 's/compileSdk = .*/compileSdk = 36/g' android/app/build.gradle.kts
+        # فقط اضافه کردن دسترسی‌های میکروفون و اینترنت
         sed -i '/<manifest/a \    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
         
         flutter build apk --release --no-tree-shake-icons
