@@ -10,55 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-          cache: 'gradle'
+    - name: Set up Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        # قابلیت کش گریدل اینجا حذف شده تا ارور ندهد
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
 
-      - name: Create Android project
-        run: |
-          flutter create --platforms=android .
+    - name: Build APK
+      run: |
+        flutter create --platforms=android .
+        flutter pub get
+        
+        sed -i 's/compileSdk = .*/compileSdk = 36/g' android/app/build.gradle.kts
+        sed -i '/<manifest/a \    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
+        
+        flutter build apk --release --no-tree-shake-icons
 
-      - name: Configure Android SDK
-        run: |
-          # Force compileSdk 36
-          sed -i 's/compileSdk = .*/compileSdk = 36/' android/app/build.gradle.kts
-
-          # Add required permissions
-          sed -i '/<manifest/a\
-              <uses-permission android:name="android.permission.RECORD_AUDIO" />\
-              <uses-permission android:name="android.permission.INTERNET" />' \
-              android/app/src/main/AndroidManifest.xml
-
-      - name: Get dependencies
-        run: |
-          flutter pub get
-
-      - name: Show Flutter and Android configuration
-        run: |
-          flutter --version
-          echo "----- build.gradle.kts -----"
-          grep -n "compileSdk" android/app/build.gradle.kts
-          echo "----- Android Manifest permissions -----"
-          grep -n "uses-permission" android/app/src/main/AndroidManifest.xml
-
-      - name: Build APK
-        run: |
-          flutter build apk --release --no-tree-shake-icons
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release
+        path: build/app/outputs/flutter-apk/app-release.apk
