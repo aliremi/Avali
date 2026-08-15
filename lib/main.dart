@@ -16,10 +16,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF6200EA), // رنگ بنفش مدرن
+          seedColor: const Color(0xFF6200EA), 
           brightness: Brightness.light,
         ),
-        fontFamily: 'Tahoma', // فونت پیش‌فرض مناسب فارسی
+        fontFamily: 'Tahoma', 
       ),
       home: const TranscriptionPage(),
     );
@@ -36,7 +36,6 @@ class TranscriptionPage extends StatefulWidget {
 class _TranscriptionPageState extends State<TranscriptionPage> {
   String _fileName = "هیچ فایلی انتخاب نشده";
   String _extractedText = "متن استخراج شده اینجا نمایش داده می‌شود...";
-  bool _isProcessing = false;
 
   Future<void> _pickFile() async {
     try {
@@ -50,9 +49,11 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("خطا در انتخاب فایل: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("خطا در انتخاب فایل: $e")),
+        );
+      }
     }
   }
 
@@ -76,7 +77,7 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
               child: Container(
                 width: 120,
                 height: 120,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
                   boxShadow: [
@@ -142,7 +143,8 @@ class _TranscriptionPageState extends State<TranscriptionPage> {
                     const SizedBox(height: 10),
                     Container(
                       width: double.infinity,
-                      minHeight: 150,
+                      // این خط تصحیح شد: استفاده از constraints به جای minHeight مستقیم
+                      constraints: const BoxConstraints(minHeight: 150),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.grey[50],
